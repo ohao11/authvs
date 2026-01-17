@@ -1,4 +1,4 @@
-package org.max.authvs.api.dto;
+package org.max.authvs.api.dto.auth.in;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

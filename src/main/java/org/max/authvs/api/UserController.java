@@ -1,6 +1,6 @@
 package org.max.authvs.api;
 
-import org.max.authvs.api.dto.UserProfile;
+import org.max.authvs.api.dto.user.out.UserProfile;
 import org.max.authvs.api.dto.ResultDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

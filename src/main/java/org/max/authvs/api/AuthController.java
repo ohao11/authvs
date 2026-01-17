@@ -1,7 +1,7 @@
 package org.max.authvs.api;
 
-import org.max.authvs.api.dto.AuthRequest;
-import org.max.authvs.api.dto.AuthResponse;
+import org.max.authvs.api.dto.auth.in.AuthRequest;
+import org.max.authvs.api.dto.auth.out.AuthResponse;
 import org.max.authvs.api.dto.ResultDTO;
 import org.max.authvs.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
