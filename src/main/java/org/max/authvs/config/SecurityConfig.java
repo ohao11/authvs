@@ -1,6 +1,6 @@
 package org.max.authvs.config;
 
-import org.max.authvs.api.dto.ApiResponse;
+import org.max.authvs.api.dto.ResultDTO;
 import org.max.authvs.security.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
@@ -89,7 +90,8 @@ public class SecurityConfig {
     private void writeError(HttpServletResponse response, HttpStatus status, String message) throws IOException {
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        ApiResponse<Void> body = ApiResponse.error(status.value(), message);
+        int code = status.value();
+        ResultDTO<Void> body = ResultDTO.error(code, message);
         objectMapper.writeValue(response.getWriter(), body);
     }
 }

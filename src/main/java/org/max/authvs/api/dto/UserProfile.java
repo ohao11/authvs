@@ -1,6 +1,13 @@
 package org.max.authvs.api.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
-public record UserProfile(String username, List<String> roles) {
+@Schema(description = "用户个人信息")
+public record UserProfile(
+        @Schema(description = "用户名", example = "admin")
+        String username,
+        @Schema(description = "用户角色", example = "[\"ADMIN\", \"USER\"]")
+        List<String> roles
+) {
 }

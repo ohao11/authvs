@@ -1,6 +1,6 @@
 package org.max.authvs.security;
 
-import org.max.authvs.api.dto.ApiResponse;
+import org.max.authvs.api.dto.ResultDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        ApiResponse<Void> body = ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), message == null ? "Invalid token" : message);
+        ResultDTO<Void> body = ResultDTO.error(ResultDTO.UNAUTHORIZED, message == null ? "Invalid token" : message);
         objectMapper.writeValue(response.getWriter(), body);
     }
 }
