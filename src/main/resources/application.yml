@@ -32,4 +32,9 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+  # 国际化配置
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    cache-duration: 3600s
 

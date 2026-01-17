@@ -3,6 +3,7 @@ package org.max.authvs.api;
 import org.max.authvs.api.dto.auth.in.LoginParam;
 import org.max.authvs.api.dto.auth.out.LoginVo;
 import org.max.authvs.api.dto.ResultDTO;
+import org.max.authvs.config.I18nMessageService;
 import org.max.authvs.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,10 +29,12 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final I18nMessageService i18nMessageService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, I18nMessageService i18nMessageService) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.i18nMessageService = i18nMessageService;
     }
 
     @Operation(summary = "用户登录", description = "用户身份认证，返回 JWT token")
@@ -46,12 +49,13 @@ public class AuthController {
                 .toList();
 
         String token = jwtService.generateToken((org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal());
+        String message = i18nMessageService.getMessage("auth.login.success");
 
-    return ResultDTO.success(new LoginVo(
+        return ResultDTO.success(new LoginVo(
                 authentication.getName(),
                 roles,
                 token,
-                "Authenticated. Use the returned Bearer token in Authorization header."
+                message
         ));
     }
 
