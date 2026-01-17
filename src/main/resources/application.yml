@@ -8,6 +8,15 @@ springdoc:
     enabled: true
 
 spring:
+  devtools:
+    # 启用 DevTools 热部署
+    restart:
+      enabled: true
+      # 可选：设置监听的文件目录（默认会监听 classpath 下的文件）
+      # 多个目录用逗号分隔
+      additional-paths: src/main/java,src/main/resources
+      # 排除某些文件变动时不触发重启（比如日志文件）
+      exclude: logs/**,*.log
   data:
     redis:
       host: localhost
