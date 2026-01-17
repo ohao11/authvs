@@ -1,7 +1,7 @@
 package org.max.authvs.api;
 
-import org.max.authvs.api.dto.auth.in.AuthRequest;
-import org.max.authvs.api.dto.auth.out.AuthResponse;
+import org.max.authvs.api.dto.auth.in.LoginParam;
+import org.max.authvs.api.dto.auth.out.LoginVo;
 import org.max.authvs.api.dto.ResultDTO;
 import org.max.authvs.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +33,7 @@ public class AuthController {
 
     @Operation(summary = "用户登录", description = "用户身份认证，返回 JWT token")
     @PostMapping("/login")
-    public ResultDTO<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+    public ResultDTO<LoginVo> login(@Valid @RequestBody LoginParam request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
         );
@@ -44,7 +44,7 @@ public class AuthController {
 
         String token = jwtService.generateToken((org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal());
 
-        return ResultDTO.success(new AuthResponse(
+    return ResultDTO.success(new LoginVo(
                 authentication.getName(),
                 roles,
                 token,

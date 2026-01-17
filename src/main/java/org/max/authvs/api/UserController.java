@@ -1,6 +1,6 @@
 package org.max.authvs.api;
 
-import org.max.authvs.api.dto.user.out.UserProfile;
+import org.max.authvs.api.dto.user.out.UserVo;
 import org.max.authvs.api.dto.ResultDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,10 +19,10 @@ public class UserController {
 
     @Operation(summary = "获取当前用户", description = "获取当前认证用户的个人信息")
     @GetMapping("/me")
-    public ResultDTO<UserProfile> me(Authentication authentication) {
+    public ResultDTO<UserVo> me(Authentication authentication) {
         List<String> roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
-        return ResultDTO.success(new UserProfile(authentication.getName(), roles));
+        return ResultDTO.success(new UserVo(authentication.getName(), roles));
     }
 }
