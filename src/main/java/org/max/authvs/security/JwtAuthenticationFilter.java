@@ -1,6 +1,5 @@
 package org.max.authvs.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,18 +24,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final ObjectMapper objectMapper;
     private final I18nMessageService i18nMessageService;
     private final HandlerExceptionResolver handlerExceptionResolver;
 
     public JwtAuthenticationFilter(JwtService jwtService,
                                    UserDetailsService userDetailsService,
-                                   ObjectMapper objectMapper,
                                    I18nMessageService i18nMessageService,
                                    @Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.objectMapper = objectMapper;
+
         this.i18nMessageService = i18nMessageService;
         this.handlerExceptionResolver = handlerExceptionResolver;
     }
