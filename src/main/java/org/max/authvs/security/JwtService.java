@@ -8,6 +8,8 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +23,13 @@ public class JwtService {
     private static final String SECRET = "super-secret-key-change-me-please-32-bytes-minimum";
     private static final long EXPIRATION_MS = 60 * 60 * 1000; // 1h
     private static final String ROLES_CLAIM = "roles";
+    private static final String REVOKED_PREFIX = "auth:revoked:";
+
+    private final StringRedisTemplate redisTemplate;
+
+    public JwtService(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     private SecretKey getKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
@@ -55,6 +64,27 @@ public class JwtService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    // Mark a token as revoked until its natural expiration
+    public void revokeToken(String token) {
+        try {
+            Date expiration = parseClaims(token).getBody().getExpiration();
+            if (expiration == null) return;
+            long ttlMillis = expiration.getTime() - System.currentTimeMillis();
+            if (ttlMillis <= 0) return;
+            String key = REVOKED_PREFIX + token;
+            redisTemplate.opsForValue().set(key, "1", ttlMillis, TimeUnit.MILLISECONDS);
+        } catch (Exception ignored) {
+            // 无法解析令牌时，忽略撤销请求
+        }
+    }
+
+    // Check if token is revoked (and not yet expired). Clean up expired entries lazily
+    public boolean isTokenRevoked(String token) {
+        String key = REVOKED_PREFIX + token;
+        Boolean exists = redisTemplate.hasKey(key);
+        return exists != null && exists;
     }
 
     private Jws<Claims> parseClaims(String token) {

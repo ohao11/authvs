@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpHeaders;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -50,5 +53,17 @@ public class AuthController {
                 token,
                 "Authenticated. Use the returned Bearer token in Authorization header."
         ));
+    }
+
+    @Operation(summary = "用户登出", description = "登出并使当前令牌失效")
+    @PostMapping("/logout")
+    public ResultDTO<Void> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            jwtService.revokeToken(token);
+        }
+        SecurityContextHolder.clearContext();
+        return ResultDTO.success(null);
     }
 }

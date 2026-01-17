@@ -7,3 +7,20 @@ springdoc:
   swagger-ui:
     enabled: true
 
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      password: 123456
+      database: 0
+      # 读取超时时间（推荐使用标准时长格式，如 2s）
+      timeout: 2s
+      # 可选：连接超时（如需单独设置）
+      connect-timeout: 2s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
