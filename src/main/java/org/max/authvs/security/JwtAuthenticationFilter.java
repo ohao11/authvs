@@ -77,12 +77,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             handlerExceptionResolver.resolveException(request, response, null, new InvalidTokenException(message));
         }
     }
-
-    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpStatus.OK.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        ResultDTO<Void> body = ResultDTO.error(ResultDTO.UNAUTHORIZED, message == null ? "Invalid token" : message);
-        objectMapper.writeValue(response.getWriter(), body);
-    }
 }
