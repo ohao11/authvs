@@ -6,6 +6,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.max.authvs.api.dto.ResultDTO;
+import org.max.authvs.api.exception.InvalidTokenException;
+import org.max.authvs.api.exception.TokenRevokedException;
 import org.max.authvs.config.I18nMessageService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,12 +30,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
     private final ObjectMapper objectMapper;
     private final I18nMessageService i18nMessageService;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService, ObjectMapper objectMapper, I18nMessageService i18nMessageService) {
+    public JwtAuthenticationFilter(JwtService jwtService,
+                                   UserDetailsService userDetailsService,
+                                   ObjectMapper objectMapper,
+                                   I18nMessageService i18nMessageService,
+                                   @Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
         this.i18nMessageService = i18nMessageService;
+        this.handlerExceptionResolver = handlerExceptionResolver;
     }
 
     @Override
@@ -47,7 +57,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // If token has been revoked, reject immediately
             if (jwtService.isTokenRevoked(token)) {
-                writeUnauthorized(response, i18nMessageService.getMessage("auth.token.revoked"));
+                String message = i18nMessageService.getMessage("auth.token.revoked");
+                handlerExceptionResolver.resolveException(request, response, null, new TokenRevokedException(message));
                 return;
             }
             String username = jwtService.extractUsername(token);
@@ -62,7 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             filterChain.doFilter(request, response);
         } catch (Exception e) {
-            writeUnauthorized(response, i18nMessageService.getMessage("auth.token.invalid"));
+            String message = i18nMessageService.getMessage("auth.token.invalid");
+            handlerExceptionResolver.resolveException(request, response, null, new InvalidTokenException(message));
         }
     }
 
