@@ -9,7 +9,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>authvs</name>
-    <description>In-memory authentication service</description>
+    <description>Authentication service with MySQL and JWT</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -100,6 +100,21 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <!-- MyBatis-Plus for MySQL access (Spring Boot 4) -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+            <version>3.5.15</version>
+        </dependency>
+
+        <!-- MySQL and JPA for database support -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Removed JPA as we're switching to MyBatis-Plus -->
     </dependencies>
 
     <build>

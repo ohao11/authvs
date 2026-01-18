@@ -17,6 +17,15 @@ spring:
       additional-paths: src/main/java,src/main/resources
       # 排除某些文件变动时不触发重启（比如日志文件）
       exclude: logs/**,*.log
+  # MySQL数据库配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/authvs?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    # 移除JPA相关配置（已切换到MyBatis-Plus）
+    enabled: false
   data:
     redis:
       host: localhost
@@ -38,3 +47,12 @@ spring:
     encoding: UTF-8
     cache-duration: 3600s
 
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix:

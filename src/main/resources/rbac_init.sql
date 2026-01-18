@@ -1,0 +1,162 @@
+-- =============================================
+-- RBAC权限管理系统 - 数据库初始化脚本
+-- =============================================
+
+-- 创建数据库（如果不存在）
+CREATE DATABASE IF NOT EXISTS authvs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE authvs;
+
+-- 删除旧表（如果存在）
+DROP TABLE IF EXISTS role_permissions;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS permissions;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS users;
+
+-- 1. 用户表 (users) - 支持后台管理员和门户用户
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '用户ID',
+    username VARCHAR(50) NOT NULL COMMENT '用户名',
+    password VARCHAR(255) NOT NULL COMMENT '密码（BCrypt加密）',
+    email VARCHAR(100) COMMENT '邮箱',
+    phone VARCHAR(20) COMMENT '手机号',
+    user_type TINYINT(1) NOT NULL DEFAULT 1 COMMENT '用户类型：1-门户用户 2-后台管理员',
+    enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+    created_at TIMESTAMP NULL COMMENT '创建时间',
+    updated_at TIMESTAMP NULL COMMENT '更新时间',
+    UNIQUE KEY uk_username (username),
+    UNIQUE KEY uk_email (email),
+    UNIQUE KEY uk_phone (phone),
+    KEY idx_user_type (user_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+
+-- 2. 角色表 (roles) - 区分门户和后台角色
+CREATE TABLE roles (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '角色ID',
+    role_name VARCHAR(50) NOT NULL COMMENT '角色名称',
+    role_code VARCHAR(50) NOT NULL COMMENT '角色编码',
+    role_type TINYINT(1) NOT NULL DEFAULT 1 COMMENT '角色类型：1-门户角色 2-后台角色',
+    description VARCHAR(200) COMMENT '角色描述',
+    enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+    created_at TIMESTAMP NULL COMMENT '创建时间',
+    updated_at TIMESTAMP NULL COMMENT '更新时间',
+    UNIQUE KEY uk_role_code_type (role_code, role_type),
+    KEY idx_role_type (role_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色表';
+
+-- 3. 权限表 (permissions) - 模块级权限控制
+CREATE TABLE permissions (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '权限ID',
+    permission_name VARCHAR(100) NOT NULL COMMENT '权限名称',
+    permission_code VARCHAR(100) NOT NULL COMMENT '权限编码',
+    permission_type TINYINT(1) NOT NULL DEFAULT 1 COMMENT '权限类型：1-门户权限 2-后台权限',
+    module_path VARCHAR(100) COMMENT '模块路径',
+    parent_id BIGINT DEFAULT 0 COMMENT '父级权限ID，0表示顶级',
+    sort_order INT DEFAULT 0 COMMENT '排序顺序',
+    description VARCHAR(200) COMMENT '权限描述',
+    enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+    created_at TIMESTAMP NULL COMMENT '创建时间',
+    updated_at TIMESTAMP NULL COMMENT '更新时间',
+    UNIQUE KEY uk_permission_code_type (permission_code, permission_type),
+    KEY idx_permission_type (permission_type),
+    KEY idx_parent_id (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='权限表（模块级）';
+
+-- 4. 用户角色关联表 (user_roles)
+CREATE TABLE user_roles (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关联ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    created_at TIMESTAMP NULL COMMENT '创建时间',
+    UNIQUE KEY uk_user_role (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    KEY idx_user_id (user_id),
+    KEY idx_role_id (role_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色关联表';
+
+-- 5. 角色权限关联表 (role_permissions)
+CREATE TABLE role_permissions (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关联ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    permission_id BIGINT NOT NULL COMMENT '权限ID',
+    created_at TIMESTAMP NULL COMMENT '创建时间',
+    UNIQUE KEY uk_role_permission (role_id, permission_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
+    KEY idx_role_id (role_id),
+    KEY idx_permission_id (permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色权限关联表';
+
+-- =============================================
+-- 初始化示例数据
+-- =============================================
+
+-- 后台管理角色
+INSERT INTO roles (role_name, role_code, role_type, description) VALUES
+('超级管理员', 'SUPER_ADMIN', 2, '后台超级管理员，拥有所有权限'),
+('系统管理员', 'SYSTEM_ADMIN', 2, '后台系统管理员，负责系统配置和维护'),
+('安全管理员', 'SECURITY_ADMIN', 2, '后台安全管理员，负责安全策略和权限管理'),
+('审计管理员', 'AUDIT_ADMIN', 2, '后台审计管理员，负责系统审计和日志管理');
+
+-- 门户用户角色
+INSERT INTO roles (role_name, role_code, role_type, description) VALUES
+('普通用户', 'NORMAL_USER', 1, '门户普通用户');
+
+-- 后台管理权限（模块级）
+INSERT INTO permissions (permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
+('用户管理', 'USER_MODULE', 2, '/admin/users', 0, 1, '后台用户管理模块'),
+('角色管理', 'ROLE_MODULE', 2, '/admin/roles', 0, 2, '后台角色管理模块'),
+('权限管理', 'PERMISSION_MODULE', 2, '/admin/permissions', 0, 3, '后台权限管理模块'),
+('内容管理', 'CONTENT_MODULE', 2, '/admin/contents', 0, 4, '后台内容管理模块'),
+('系统设置', 'SYSTEM_MODULE', 2, '/admin/settings', 0, 5, '后台系统设置模块');
+
+-- 门户用户权限（模块级）
+INSERT INTO permissions (permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
+('个人中心', 'PROFILE_MODULE', 1, '/portal/profile', 0, 1, '门户个人中心模块'),
+('我的订单', 'ORDER_MODULE', 1, '/portal/orders', 0, 2, '门户订单管理模块'),
+('会员服务', 'VIP_MODULE', 1, '/portal/vip', 0, 3, '门户会员服务模块'),
+('消息通知', 'MESSAGE_MODULE', 1, '/portal/messages', 0, 4, '门户消息通知模块');
+
+-- 后台管理员用户（密码：admin123, sysadmin123, secadmin123, auditadmin123）
+INSERT INTO users (username, password, email, phone, user_type, enabled) VALUES
+('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/shaO', 'admin@example.com', '13800138000', 2, 1),
+('sysadmin', '$2a$10$V9.2Q0EX3hXKK3cAJ1eJb.FFCfVqoGdL77fBBhBVqXG5EeX/2hVhS', 'sysadmin@example.com', '13800138001', 2, 1),
+('secadmin', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'secadmin@example.com', '13800138002', 2, 1),
+('auditadmin', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'auditadmin@example.com', '13800138003', 2, 1);
+
+-- 门户用户（密码：user123）
+INSERT INTO users (username, password, email, phone, user_type, enabled) VALUES
+('user001', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'user001@example.com', '13900139001', 1, 1),
+('user002', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'user002@example.com', '13900139002', 1, 1);
+
+-- 用户角色关联
+INSERT INTO user_roles (user_id, role_id) VALUES
+(1, 1), -- admin 拥有 超级管理员 角色
+(2, 2), -- sysadmin 拥有 系统管理员 角色
+(3, 3), -- secadmin 拥有 安全管理员 角色
+(4, 4), -- auditadmin 拥有 审计管理员 角色
+(5, 5), -- user001 拥有 普通用户 角色
+(6, 5); -- user002 拥有 普通用户 角色
+
+-- 角色权限关联
+-- 超级管理员拥有所有后台权限
+INSERT INTO role_permissions (role_id, permission_id) VALUES
+(1, 1), (1, 2), (1, 3), (1, 4), (1, 5);
+
+-- 系统管理员拥有用户管理和系统设置权限
+INSERT INTO role_permissions (role_id, permission_id) VALUES
+(2, 1), (2, 5);
+
+-- 安全管理员拥有角色管理和权限管理权限
+INSERT INTO role_permissions (role_id, permission_id) VALUES
+(3, 2), (3, 3);
+
+-- 审计管理员拥有内容管理权限
+INSERT INTO role_permissions (role_id, permission_id) VALUES
+(4, 4);
+
+-- 普通用户拥有所有门户权限
+INSERT INTO role_permissions (role_id, permission_id) VALUES
+(5, 6), (5, 7), (5, 8), (5, 9);

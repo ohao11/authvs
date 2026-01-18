@@ -1,0 +1,126 @@
+package org.max.authvs.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import lombok.extern.slf4j.Slf4j;
+import org.max.authvs.api.dto.user.out.UserDetailVo;
+import org.max.authvs.entity.*;
+import org.max.authvs.mapper.*;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 用户服务
+ */
+@Service
+@Slf4j
+public class UserService {
+
+    private final UserMapper userMapper;
+    private final UserRoleMapper userRoleMapper;
+    private final RoleMapper roleMapper;
+    private final RolePermissionMapper rolePermissionMapper;
+    private final PermissionMapper permissionMapper;
+
+    public UserService(UserMapper userMapper,
+                       UserRoleMapper userRoleMapper,
+                       RoleMapper roleMapper,
+                       RolePermissionMapper rolePermissionMapper,
+                       PermissionMapper permissionMapper) {
+        this.userMapper = userMapper;
+        this.userRoleMapper = userRoleMapper;
+        this.roleMapper = roleMapper;
+        this.rolePermissionMapper = rolePermissionMapper;
+        this.permissionMapper = permissionMapper;
+    }
+
+    /**
+     * 根据用户名获取用户详细信息（包含角色和权限）
+     */
+    public UserDetailVo getUserDetailByUsername(String username) {
+        // 1. 查询用户基本信息
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username));
+        
+        if (user == null) {
+            return null;
+        }
+
+        UserDetailVo userDetailVo = new UserDetailVo();
+        userDetailVo.setId(user.getId());
+        userDetailVo.setUsername(user.getUsername());
+        userDetailVo.setEmail(user.getEmail());
+        userDetailVo.setPhone(user.getPhone());
+        userDetailVo.setUserType(user.getUserType());
+        userDetailVo.setEnabled(user.getEnabled());
+
+        // 2. 查询用户的角色ID列表
+        List<UserRole> userRoles = userRoleMapper.selectList(
+                new LambdaQueryWrapper<UserRole>()
+                        .eq(UserRole::getUserId, user.getId())
+        );
+        
+        List<Long> roleIds = userRoles.stream()
+                .map(UserRole::getRoleId)
+                .collect(Collectors.toList());
+
+        if (roleIds.isEmpty()) {
+            userDetailVo.setRoles(new ArrayList<>());
+            userDetailVo.setPermissions(new ArrayList<>());
+            return userDetailVo;
+        }
+
+        // 3. 查询角色详情
+        List<Role> roles = roleMapper.selectBatchIds(roleIds);
+        List<UserDetailVo.RoleVo> roleVos = roles.stream()
+                .filter(role -> Boolean.TRUE.equals(role.getEnabled()))
+                .map(role -> {
+                    UserDetailVo.RoleVo roleVo = new UserDetailVo.RoleVo();
+                    roleVo.setId(role.getId());
+                    roleVo.setRoleName(role.getRoleName());
+                    roleVo.setRoleCode(role.getRoleCode());
+                    roleVo.setRoleType(role.getRoleType());
+                    roleVo.setDescription(role.getDescription());
+                    return roleVo;
+                })
+                .collect(Collectors.toList());
+        userDetailVo.setRoles(roleVos);
+
+        // 4. 查询角色对应的权限ID列表
+        List<RolePermission> rolePermissions = rolePermissionMapper.selectList(
+                new LambdaQueryWrapper<RolePermission>()
+                        .in(RolePermission::getRoleId, roleIds)
+        );
+        
+        List<Long> permissionIds = rolePermissions.stream()
+                .map(RolePermission::getPermissionId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 5. 查询权限详情
+        if (permissionIds.isEmpty()) {
+            userDetailVo.setPermissions(new ArrayList<>());
+            return userDetailVo;
+        }
+
+        List<Permission> permissions = permissionMapper.selectBatchIds(permissionIds);
+        List<UserDetailVo.PermissionVo> permissionVos = permissions.stream()
+                .filter(permission -> Boolean.TRUE.equals(permission.getEnabled()))
+                .map(permission -> {
+                    UserDetailVo.PermissionVo permissionVo = new UserDetailVo.PermissionVo();
+                    permissionVo.setId(permission.getId());
+                    permissionVo.setPermissionName(permission.getPermissionName());
+                    permissionVo.setPermissionCode(permission.getPermissionCode());
+                    permissionVo.setPermissionType(permission.getPermissionType());
+                    permissionVo.setModulePath(permission.getModulePath());
+                    permissionVo.setDescription(permission.getDescription());
+                    return permissionVo;
+                })
+                .collect(Collectors.toList());
+        userDetailVo.setPermissions(permissionVos);
+
+        return userDetailVo;
+    }
+}

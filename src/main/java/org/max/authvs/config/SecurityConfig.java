@@ -2,6 +2,7 @@ package org.max.authvs.config;
 
 import org.max.authvs.api.dto.ResultDTO;
 import org.max.authvs.security.JwtAuthenticationFilter;
+import org.max.authvs.service.CustomUserDetailsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -15,12 +16,9 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -31,9 +29,11 @@ import java.io.IOException;
 public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
+    private final CustomUserDetailsService customUserDetailsService;
 
-    public SecurityConfig(ObjectMapper objectMapper) {
+    public SecurityConfig(ObjectMapper objectMapper, CustomUserDetailsService customUserDetailsService) {
         this.objectMapper = objectMapper;
+        this.customUserDetailsService = customUserDetailsService;
     }
 
     @Bean
@@ -55,26 +55,6 @@ public class SecurityConfig {
                         writeError(response, HttpStatus.FORBIDDEN, "Forbidden"))
                 );
         return http.build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails admin = User.withUsername("admin")
-                .password(passwordEncoder.encode("admin123"))
-                .roles("ADMIN", "USER")
-                .build();
-
-        UserDetails user = User.withUsername("user")
-                .password(passwordEncoder.encode("user123"))
-                .roles("USER")
-                .build();
-
-        UserDetails viewer = User.withUsername("viewer")
-                .password(passwordEncoder.encode("viewer123"))
-                .roles("VIEWER")
-                .build();
-
-        return new InMemoryUserDetailsManager(admin, user, viewer);
     }
 
     @Bean
