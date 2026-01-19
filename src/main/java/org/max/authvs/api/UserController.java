@@ -5,8 +5,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.max.authvs.annotation.OperationLog;
-import org.max.authvs.api.dto.PageQuery;
 import org.max.authvs.api.dto.ResultDTO;
+import org.max.authvs.api.dto.user.in.UserQueryParam;
 import org.max.authvs.api.dto.user.out.PageVO;
 import org.max.authvs.api.dto.user.out.UserDetailVo;
 import org.max.authvs.api.dto.user.out.UserListVO;
@@ -46,15 +46,15 @@ public class UserController {
     }
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "分页查询用户列表")
-    @Operation(summary = "分页查询用户列表", description = "查询后台管理员用户列表，需要用户管理权限或SUPER_ADMIN角色")
+    @Operation(summary = "分页查询用户列表", description = "查询后台管理员用户列表，支持按用户名、邮箱、手机号等条件查询，需要用户管理权限")
     @PreAuthorize("@accessChecker.perm('PERM_USER_MODULE')")
     @PostMapping("/page")
     public ResultDTO<PageVO<UserListVO>> getUsersByPage(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "分页查询参数",
+                    description = "用户查询参数",
                     required = true)
-            @RequestBody PageQuery pageQuery) {
-        PageVO<UserListVO> pageVO = userService.getUsersByPage(pageQuery.getPageNum(), pageQuery.getPageSize());
+            @RequestBody UserQueryParam param) {
+        PageVO<UserListVO> pageVO = userService.getUsersByPage(param);
         return ResultDTO.success(pageVO);
     }
 

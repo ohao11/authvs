@@ -1,9 +1,11 @@
 package org.max.authvs.service;
 
 import cn.hutool.core.util.DesensitizedUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import org.max.authvs.api.dto.user.in.UserQueryParam;
 import org.max.authvs.api.dto.user.out.PageVO;
 import org.max.authvs.api.dto.user.out.UserDetailVo;
 import org.max.authvs.api.dto.user.out.UserListVO;
@@ -44,12 +46,31 @@ public class UserService {
     /**
      * 分页查询用户列表
      */
-    public PageVO<UserListVO> getUsersByPage(long pageNum, long pageSize) {
-        Page<User> page = new Page<>(pageNum, pageSize);
-        Page<User> userPage = userMapper.selectPage(page,
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getUserType, 2) // 只查询后台管理员用户
-                        .orderByDesc(User::getCreatedAt));
+    /**
+     * 分页查询用户列表
+     */
+    public PageVO<UserListVO> getUsersByPage(UserQueryParam param) {
+        Page<User> page = new Page<>(param.getPageNum(), param.getPageSize());
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<User>()
+                .eq(User::getUserType, 2); // 只查询后台管理员用户
+
+        // 添加动态查询条件
+        if (StrUtil.isNotBlank(param.getUsername())) {
+            queryWrapper.like(User::getUsername, param.getUsername());
+        }
+        if (StrUtil.isNotBlank(param.getEmail())) {
+            queryWrapper.like(User::getEmail, param.getEmail());
+        }
+        if (StrUtil.isNotBlank(param.getPhone())) {
+            queryWrapper.like(User::getPhone, param.getPhone());
+        }
+        if (param.getEnabled() != null) {
+            queryWrapper.eq(User::getEnabled, param.getEnabled());
+        }
+
+        queryWrapper.orderByDesc(User::getCreatedAt);
+
+        Page<User> userPage = userMapper.selectPage(page, queryWrapper);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<UserListVO> userListVOs = userPage.getRecords().stream()
