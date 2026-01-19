@@ -6,6 +6,8 @@ import org.jspecify.annotations.NonNull;
 import org.max.authvs.entity.*;
 import org.max.authvs.mapper.*;
 import org.max.authvs.security.CustomUserDetails;
+import org.max.authvs.security.PermissionCacheService;
+import org.max.authvs.security.PermissionCacheVO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,10 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -31,21 +30,31 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final RoleMapper roleMapper;
     private final RolePermissionMapper rolePermissionMapper;
     private final PermissionMapper permissionMapper;
+    private final PermissionCacheService permissionCacheService;
 
     public CustomUserDetailsService(UserMapper userMapper,
                                     UserRoleMapper userRoleMapper,
                                     RoleMapper roleMapper,
                                     RolePermissionMapper rolePermissionMapper,
-                                    PermissionMapper permissionMapper) {
+                                    PermissionMapper permissionMapper,
+                                    PermissionCacheService permissionCacheService) {
         this.userMapper = userMapper;
         this.userRoleMapper = userRoleMapper;
         this.roleMapper = roleMapper;
         this.rolePermissionMapper = rolePermissionMapper;
         this.permissionMapper = permissionMapper;
+        this.permissionCacheService = permissionCacheService;
     }
 
     @Override
     public UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException {
+        // 0. 优先从缓存读取，避免所有数据库查询
+        Optional<PermissionCacheVO> cacheOpt = permissionCacheService.getByUsername(username);
+        if (cacheOpt.isPresent()) {
+            log.info("Permission cache hit for user: {}", username);
+            return buildFromCache(cacheOpt.get());
+        }
+
         // 1. 查询用户
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, username));
@@ -124,7 +133,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList()));
 
-        return new CustomUserDetails(
+        CustomUserDetails details = new CustomUserDetails(
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
@@ -132,6 +141,28 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getPhone(),
                 user.getUserType(),
                 Boolean.TRUE.equals(user.getEnabled()),
+                new ArrayList<>(authorities)
+        );
+
+        // 缓存权限，后续请求直接命中缓存
+        permissionCacheService.cachePermissions(details);
+
+        return details;
+    }
+
+    private CustomUserDetails buildFromCache(PermissionCacheVO cache) {
+        Set<GrantedAuthority> authorities = cache.getAuthorities().stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
+
+        return new CustomUserDetails(
+                cache.getUserId(),
+                cache.getUsername(),
+                "", // 密码不存储在缓存中
+                cache.getEmail(),
+                cache.getPhone(),
+                cache.getUserType(),
+                Boolean.TRUE.equals(cache.getEnabled()),
                 new ArrayList<>(authorities)
         );
     }

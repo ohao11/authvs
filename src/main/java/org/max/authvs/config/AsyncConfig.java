@@ -3,50 +3,27 @@ package org.max.authvs.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.Executors;
 
 /**
- * 异步任务配置
+ * 异步任务配置 - 使用 Java 21 虚拟线程
  */
 @Configuration
 @EnableAsync
 public class AsyncConfig {
 
     /**
-     * 操作日志异步线程池
+     * 操作日志异步执行器 - 基于虚拟线程
+     * Java 21 虚拟线程优势：
+     * 1. 轻量级：可创建数百万个虚拟线程，内存占用极小
+     * 2. 无需调优：无需配置核心线程数、最大线程数、队列容量
+     * 3. 自动伸缩：根据负载自动创建和销毁
+     * 4. 简化管理：无需担心线程池耗尽或队列溢出
      */
     @Bean("operationLogExecutor")
     public Executor operationLogExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-
-        // 核心线程数
-        executor.setCorePoolSize(2);
-
-        // 最大线程数
-        executor.setMaxPoolSize(5);
-
-        // 队列容量
-        executor.setQueueCapacity(100);
-
-        // 线程名称前缀
-        executor.setThreadNamePrefix("operation-log-");
-
-        // 线程空闲时间（秒）
-        executor.setKeepAliveSeconds(60);
-
-        // 拒绝策略：由调用线程处理
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-
-        // 等待所有任务完成后再关闭线程池
-        executor.setWaitForTasksToCompleteOnShutdown(true);
-
-        // 等待时间（秒）
-        executor.setAwaitTerminationSeconds(60);
-
-        executor.initialize();
-        return executor;
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
 }

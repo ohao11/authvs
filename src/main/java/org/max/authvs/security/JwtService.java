@@ -27,9 +27,11 @@ public class JwtService {
     private static final String USER_ID_CLAIM = "userId";
 
     private final StringRedisTemplate redisTemplate;
+    private final PermissionCacheService permissionCacheService;
 
-    public JwtService(StringRedisTemplate redisTemplate) {
+    public JwtService(StringRedisTemplate redisTemplate, PermissionCacheService permissionCacheService) {
         this.redisTemplate = redisTemplate;
+        this.permissionCacheService = permissionCacheService;
     }
 
     private SecretKey getKey() {
@@ -65,6 +67,11 @@ public class JwtService {
 
         // 保存新的 token 到 Redis，用于单设备登录控制
         saveUserDeviceToken(userId, deviceType, token, EXPIRATION_MS);
+
+        // 缓存权限信息，减少后续请求的数据库查询
+        if (userDetails instanceof CustomUserDetails customUserDetails) {
+            permissionCacheService.cachePermissions(customUserDetails);
+        }
 
         return token;
     }
