@@ -25,9 +25,9 @@ CREATE TABLE users (
     enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
     created_at TIMESTAMP NULL COMMENT '创建时间',
     updated_at TIMESTAMP NULL COMMENT '更新时间',
-    UNIQUE KEY uk_username (username),
-    UNIQUE KEY uk_email (email),
-    UNIQUE KEY uk_phone (phone),
+    KEY idx_username (username),
+    KEY idx_email (email),
+    KEY idx_phone (phone),
     KEY idx_user_type (user_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 

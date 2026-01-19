@@ -1,10 +1,10 @@
 package org.max.authvs.service;
 
+import org.max.authvs.api.dto.auth.DeviceType;
 import org.max.authvs.api.dto.auth.out.LoginVo;
 import org.max.authvs.config.I18nMessageService;
 import org.max.authvs.security.CustomUserDetails;
 import org.max.authvs.security.JwtService;
-import org.max.authvs.utils.SensitiveDataUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,20 +23,15 @@ public class AuthService {
 
     /**
      * 处理用户登录逻辑
+     *
+     * @param userDetails 用户详情
+     * @param deviceType  设备类型
+     * @return 登录响应
      */
-    public LoginVo handleLogin(CustomUserDetails userDetails) {
-        String token = jwtService.generateToken(userDetails);
+    public LoginVo handleLogin(CustomUserDetails userDetails, DeviceType deviceType) {
+        String token = jwtService.generateToken(userDetails, deviceType, userDetails.getId());
         String message = i18nMessageService.getMessage("auth.login.success");
-
-        return new LoginVo(
-                userDetails.getId(),
-                userDetails.getUsername(),
-                SensitiveDataUtils.maskEmail(userDetails.getEmail()),
-                SensitiveDataUtils.maskPhone(userDetails.getPhone()),
-                userDetails.getUserType(),
-                token,
-                message
-        );
+        return new LoginVo(token, message);
     }
 
     /**

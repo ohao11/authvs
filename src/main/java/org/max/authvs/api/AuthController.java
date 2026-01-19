@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.max.authvs.api.dto.ResultDTO;
+import org.max.authvs.api.dto.auth.DeviceType;
 import org.max.authvs.api.dto.auth.in.LoginParam;
 import org.max.authvs.api.dto.auth.out.LoginVo;
 import org.max.authvs.security.CustomUserDetails;
@@ -32,7 +33,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @Operation(summary = "用户登录", description = "用户身份认证，返回 JWT token")
+    @Operation(summary = "用户登录", description = "用户身份认证，返回 JWT token。支持设备类型参数，同一设备类型仅允许一个活跃会话")
     @PostMapping("/login")
     public ResultDTO<LoginVo> login(@Valid @RequestBody LoginParam request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -40,7 +41,8 @@ public class AuthController {
         );
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        LoginVo loginVo = authService.handleLogin(userDetails);
+        DeviceType deviceType = DeviceType.fromCode(request.deviceType());
+        LoginVo loginVo = authService.handleLogin(userDetails, deviceType);
         return ResultDTO.success(loginVo);
     }
 
