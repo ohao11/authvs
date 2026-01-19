@@ -2,15 +2,23 @@ package org.max.authvs.api;
 
 import org.max.authvs.api.dto.user.out.UserDetailVo;
 import org.max.authvs.api.dto.user.out.UserVo;
+import org.max.authvs.api.dto.user.out.PageVO;
+import org.max.authvs.api.dto.user.out.UserListVO;
 import org.max.authvs.api.dto.ResultDTO;
+import org.max.authvs.api.dto.PageQuery;
 import org.max.authvs.security.CustomUserDetails;
 import org.max.authvs.service.UserService;
 import org.max.authvs.utils.SensitiveDataUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -88,4 +96,40 @@ public class UserController {
             boolean enabled,
             List<String> authorities
     ) {}
+
+    @Operation(summary = "分页查询用户列表", description = "查询后台管理员用户列表，需要用户管理权限或SUPER_ADMIN角色")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USER_MODULE')")
+    @PostMapping("/page")
+    public ResultDTO<PageVO<UserListVO>> getUsersByPage(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "分页查询参数",
+                    required = true)
+            @RequestBody PageQuery pageQuery) {
+        try {
+            PageVO<UserListVO> pageVO = userService.getUsersByPage(pageQuery.getPageNum(), pageQuery.getPageSize());
+            return ResultDTO.success(pageVO);
+        } catch (Exception e) {
+            return ResultDTO.error(ResultDTO.SERVER_ERROR, "查询用户列表失败");
+        }
+    }
+
+    @Operation(summary = "获取用户详细信息", description = "根据用户ID查询用户详细信息（包含角色和权限），需要用户管理权限或SUPER_ADMIN角色")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USER_MODULE')")
+    @GetMapping("/{userId}/detail")
+    public ResultDTO<UserDetailVo> getUserDetail(
+            @Parameter(description = "用户ID", example = "1")
+            @PathVariable Long userId) {
+        if (userId == null || userId <= 0) {
+            return ResultDTO.error(ResultDTO.BAD_REQUEST, "用户ID无效");
+        }
+        try {
+            UserDetailVo userDetail = userService.getUserDetailById(userId);
+            if (userDetail == null) {
+                return ResultDTO.error(ResultDTO.BAD_REQUEST, "用户不存在");
+            }
+            return ResultDTO.success(userDetail);
+        } catch (Exception e) {
+            return ResultDTO.error(ResultDTO.SERVER_ERROR, "查询用户详细信息失败");
+        }
+    }
 }
