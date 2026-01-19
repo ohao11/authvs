@@ -2,11 +2,13 @@ package org.max.authvs.api.dto.user.in;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.max.authvs.api.dto.PageQuery;
 
 /**
  * 用户查询参数
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Schema(description = "用户查询参数")
 public class UserQueryParam extends PageQuery {
