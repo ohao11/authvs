@@ -5,24 +5,20 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import java.util.concurrent.TimeUnit;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class JwtService {
 
     private static final String SECRET = "super-secret-key-change-me-please-32-bytes-minimum";
     private static final long EXPIRATION_MS = 60 * 60 * 1000; // 1h
-    private static final String ROLES_CLAIM = "roles";
     private static final String REVOKED_PREFIX = "auth:revoked:";
 
     private final StringRedisTemplate redisTemplate;
@@ -38,13 +34,9 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + EXPIRATION_MS);
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
-                .addClaims(Map.of(ROLES_CLAIM, roles))
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(getKey(), SignatureAlgorithm.HS256)
