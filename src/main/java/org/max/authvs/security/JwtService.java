@@ -24,6 +24,7 @@ public class JwtService {
     private static final String REVOKED_PREFIX = "auth:revoked:";
     private static final String USER_DEVICE_PREFIX = "auth:user:";
     private static final String DEVICE_TYPE_CLAIM = "deviceType";
+    private static final String USER_ID_CLAIM = "userId";
 
     private final StringRedisTemplate redisTemplate;
 
@@ -50,9 +51,13 @@ public class JwtService {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + EXPIRATION_MS);
 
+        Map<String, Object> claims = new java.util.HashMap<>();
+        claims.put(DEVICE_TYPE_CLAIM, deviceType.getCode());
+        claims.put(USER_ID_CLAIM, userId);
+
         String token = Jwts.builder()
                 .setSubject(userDetails.getUsername())
-                .addClaims(Map.of(DEVICE_TYPE_CLAIM, deviceType.getCode()))
+                .addClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(getKey(), SignatureAlgorithm.HS256)
@@ -86,6 +91,34 @@ public class JwtService {
 
     public String extractUsername(String token) {
         return parseClaims(token).getBody().getSubject();
+    }
+
+    /**
+     * 提取设备类型编码（如 web/ios/android/pc），不存在时返回null
+     */
+    public String extractDeviceTypeCode(String token) {
+        try {
+            Object code = parseClaims(token).getBody().get(DEVICE_TYPE_CLAIM);
+            return code != null ? code.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 提取用户ID，若不存在或解析失败返回null
+     */
+    public Long extractUserId(String token) {
+        try {
+            Object val = parseClaims(token).getBody().get(USER_ID_CLAIM);
+            if (val == null) return null;
+            if (val instanceof Number num) {
+                return num.longValue();
+            }
+            return Long.parseLong(String.valueOf(val));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {

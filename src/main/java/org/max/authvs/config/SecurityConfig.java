@@ -10,7 +10,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -36,7 +35,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   JwtAuthenticationFilter jwtAuthenticationFilter) {
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -44,21 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        // SUPER_ADMIN 角色用户可以访问所有认证接口
-                        // 其他用户的权限由 @PreAuthorize 和 @Secured 注解控制
-                        .anyRequest().access((authentication, requestContext) -> {
-                            if (!authentication.get().isAuthenticated()) {
-                                return new AuthorizationDecision(false);
-                            }
-                            // 如果用户拥有 SUPER_ADMIN 角色，直接允许访问
-                            if (authentication.get().getAuthorities().stream()
-                                    .anyMatch(auth -> "ROLE_SUPER_ADMIN".equals(auth.getAuthority()))) {
-                                return new AuthorizationDecision(true);
-                            }
-                            // 对于其他认证用户，让 @PreAuthorize 决定
-                            // 返回 true 允许请求继续，让方法级的权限控制来决定最终访问
-                            return new AuthorizationDecision(true);
-                        }))
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->

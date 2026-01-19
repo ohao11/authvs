@@ -1,18 +1,20 @@
 package org.max.authvs.api;
 
+import cn.hutool.core.util.DesensitizedUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.max.authvs.annotation.OperationLog;
 import org.max.authvs.api.dto.PageQuery;
 import org.max.authvs.api.dto.ResultDTO;
 import org.max.authvs.api.dto.user.out.PageVO;
 import org.max.authvs.api.dto.user.out.UserDetailVo;
 import org.max.authvs.api.dto.user.out.UserListVO;
 import org.max.authvs.api.dto.user.out.UserVo;
+import org.max.authvs.enums.OperationType;
 import org.max.authvs.security.CustomUserDetails;
 import org.max.authvs.service.UserService;
 import org.max.authvs.utils.SecurityUtils;
-import org.max.authvs.utils.SensitiveDataUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "查询当前用户信息")
     @Operation(summary = "获取当前用户", description = "获取当前认证用户的个人信息")
     @GetMapping("/me")
     public ResultDTO<UserVo> me() {
@@ -34,16 +37,17 @@ public class UserController {
         UserVo userVo = new UserVo(
                 userDetails.getId(),
                 userDetails.getUsername(),
-                SensitiveDataUtils.maskEmail(userDetails.getEmail()),
-                SensitiveDataUtils.maskPhone(userDetails.getPhone()),
+                DesensitizedUtil.email(userDetails.getEmail()),
+                DesensitizedUtil.mobilePhone(userDetails.getPhone()),
                 userDetails.getUserType(),
                 userDetails.isEnabled()
         );
         return ResultDTO.success(userVo);
     }
 
+    @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "分页查询用户列表")
     @Operation(summary = "分页查询用户列表", description = "查询后台管理员用户列表，需要用户管理权限或SUPER_ADMIN角色")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USER_MODULE')")
+    @PreAuthorize("@accessChecker.perm('PERM_USER_MODULE')")
     @PostMapping("/page")
     public ResultDTO<PageVO<UserListVO>> getUsersByPage(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -54,8 +58,9 @@ public class UserController {
         return ResultDTO.success(pageVO);
     }
 
+    @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "查询用户详情")
     @Operation(summary = "获取用户详细信息", description = "根据用户ID查询用户详细信息（包含角色和权限），需要用户管理权限或SUPER_ADMIN角色")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USER_MODULE')")
+    @PreAuthorize("@accessChecker.perm('PERM_USER_MODULE')")
     @GetMapping("/{userId}/detail")
     public ResultDTO<UserDetailVo> getUserDetail(
             @Parameter(description = "用户ID", example = "1")

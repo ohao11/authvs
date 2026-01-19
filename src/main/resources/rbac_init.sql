@@ -110,7 +110,8 @@ INSERT INTO permissions (permission_name, permission_code, permission_type, modu
 ('角色管理', 'ROLE_MODULE', 2, '/admin/roles', 0, 2, '后台角色管理模块'),
 ('权限管理', 'PERMISSION_MODULE', 2, '/admin/permissions', 0, 3, '后台权限管理模块'),
 ('内容管理', 'CONTENT_MODULE', 2, '/admin/contents', 0, 4, '后台内容管理模块'),
-('系统设置', 'SYSTEM_MODULE', 2, '/admin/settings', 0, 5, '后台系统设置模块');
+('系统设置', 'SYSTEM_MODULE', 2, '/admin/settings', 0, 5, '后台系统设置模块'),
+('审计管理', 'AUDIT_MODULE', 2, '/admin/audit', 0, 6, '后台审计管理模块');
 
 -- 门户用户权限（模块级）
 INSERT INTO permissions (permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
@@ -141,10 +142,6 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 (6, 5); -- user002 拥有 普通用户 角色
 
 -- 角色权限关联
--- 超级管理员拥有所有后台权限
-INSERT INTO role_permissions (role_id, permission_id) VALUES
-(1, 1), (1, 2), (1, 3), (1, 4), (1, 5);
-
 -- 系统管理员拥有用户管理和系统设置权限
 INSERT INTO role_permissions (role_id, permission_id) VALUES
 (2, 1), (2, 5);
@@ -153,10 +150,46 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 INSERT INTO role_permissions (role_id, permission_id) VALUES
 (3, 2), (3, 3);
 
--- 审计管理员拥有内容管理权限
+-- 审计管理员拥有内容管理和审计管理权限
 INSERT INTO role_permissions (role_id, permission_id) VALUES
-(4, 4);
+(4, 4), (4, 6);
 
 -- 普通用户拥有所有门户权限
 INSERT INTO role_permissions (role_id, permission_id) VALUES
 (5, 6), (5, 7), (5, 8), (5, 9);
+-- =============================================
+-- 操作日志表
+-- =============================================
+DROP TABLE IF EXISTS operation_log;
+
+CREATE TABLE operation_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+    user_id BIGINT COMMENT '操作用户ID',
+    username VARCHAR(50) COMMENT '操作用户名',
+    
+    operation_type VARCHAR(20) COMMENT '操作类型：LOGIN LOGOUT CREATE UPDATE DELETE QUERY EXPORT IMPORT',
+    operation_module VARCHAR(50) COMMENT '操作模块',
+    operation_desc VARCHAR(500) COMMENT '操作描述',
+    
+    request_method VARCHAR(10) COMMENT '请求方法：GET POST PUT DELETE',
+    request_url VARCHAR(500) COMMENT '请求URL',
+    request_params TEXT COMMENT '请求参数（JSON格式，敏感信息脱敏）',
+    response_result TEXT COMMENT '返回结果（JSON格式）',
+    
+    ip_address VARCHAR(50) COMMENT 'IP地址',
+    device_type VARCHAR(20) COMMENT '设备类型：WEB IOS ANDROID PC',
+    user_agent VARCHAR(500) COMMENT '用户代理',
+    
+    execute_time BIGINT COMMENT '执行时长（毫秒）',
+    status VARCHAR(20) COMMENT '执行状态：SUCCESS FAIL',
+    error_message TEXT COMMENT '错误信息',
+    
+    created_at TIMESTAMP NULL COMMENT '创建时间',
+    
+    KEY idx_user_id (user_id),
+    KEY idx_username (username),
+    KEY idx_operation_type (operation_type),
+    KEY idx_operation_module (operation_module),
+    KEY idx_status (status),
+    KEY idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
