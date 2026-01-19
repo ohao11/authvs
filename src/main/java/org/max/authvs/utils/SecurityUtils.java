@@ -1,6 +1,6 @@
 package org.max.authvs.utils;
 
-import org.max.authvs.api.exception.InvalidTokenException;
+import org.max.authvs.exception.InvalidTokenException;
 import org.max.authvs.security.CustomUserDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

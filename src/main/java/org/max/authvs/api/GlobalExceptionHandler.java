@@ -1,11 +1,11 @@
 package org.max.authvs.api;
 
-import org.max.authvs.api.dto.ResultDTO;
-import org.max.authvs.config.I18nMessageService;
-import org.max.authvs.api.exception.InvalidTokenException;
-import org.max.authvs.api.exception.TokenRevokedException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.max.authvs.api.dto.ResultDTO;
+import org.max.authvs.config.I18nMessageService;
+import org.max.authvs.exception.InvalidTokenException;
+import org.max.authvs.exception.TokenRevokedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -78,14 +78,14 @@ public class GlobalExceptionHandler {
         String clientIp = getClientIp(request);
         String queryString = request.getQueryString() != null ? "?" + request.getQueryString() : "";
         String protocol = request.getProtocol();
-        
+
         // 按照标准HTTP请求格式打印
         StringBuilder httpRequest = new StringBuilder("\n");
         httpRequest.append("==================== HTTP Request ====================\n");
-        httpRequest.append(String.format("%s %s%s %s\n", 
-                request.getMethod(), 
-                request.getRequestURI(), 
-                queryString, 
+        httpRequest.append(String.format("%s %s%s %s\n",
+                request.getMethod(),
+                request.getRequestURI(),
+                queryString,
                 protocol));
         httpRequest.append(headers);
         if (!body.equals("<no body cached>")) {
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
         httpRequest.append("==================== Exception ====================\n");
         httpRequest.append(String.format("Message: %s\n", ex.getMessage()));
         httpRequest.append("======================================================");
-        
+
         log.error(httpRequest.toString(), ex);
     }
 
