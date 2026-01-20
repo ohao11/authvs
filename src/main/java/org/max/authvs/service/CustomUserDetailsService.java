@@ -48,11 +48,28 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException {
-        // 0. 优先从缓存读取，避免所有数据库查询
-        Optional<PermissionCacheVO> cacheOpt = permissionCacheService.getByUsername(username);
-        if (cacheOpt.isPresent()) {
-            log.info("Permission cache hit for user: {}", username);
-            return buildFromCache(cacheOpt.get());
+        // 默认场景：已认证用户加载权限，使用缓存提高性能
+        return loadUserByUsername(username, true);
+    }
+
+    /**
+     * 加载用户详情，支持缓存控制
+     *
+     * @param username 用户名
+     * @param useCache 是否使用缓存：
+     *                 - true: 优先使用缓存（适用于已认证用户），如缓存不存在则查询数据库但不包含密码
+     *                 - false: 绕过缓存直接查询数据库（适用于登录认证，需要验证密码）
+     * @return UserDetails
+     * @throws UsernameNotFoundException 用户不存在时抛出
+     */
+    public UserDetails loadUserByUsername(@NonNull String username, boolean useCache) throws UsernameNotFoundException {
+        // 0. 如果使用缓存，优先从缓存读取，避免数据库查询
+        if (useCache) {
+            Optional<PermissionCacheVO> cacheOpt = permissionCacheService.getByUsername(username);
+            if (cacheOpt.isPresent()) {
+                log.info("Permission cache hit for user: {}", username);
+                return buildFromCache(cacheOpt.get());
+            }
         }
 
         // 1. 查询用户
