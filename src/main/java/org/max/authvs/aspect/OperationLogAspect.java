@@ -85,6 +85,19 @@ public class OperationLogAspect {
         operationLog.setOperationModule(annotation.module());
         operationLog.setOperationDesc(annotation.description());
 
+        // 根据请求URL判断平台类型
+        if (operationLog.getRequestUrl() != null) {
+            if (operationLog.getRequestUrl().startsWith("/api/admin") || 
+                operationLog.getRequestUrl().startsWith("/api/admins") ||
+                operationLog.getRequestUrl().startsWith("/api/operation-logs")) {
+                operationLog.setPlatformType(2); // 后台管理
+            } else {
+                operationLog.setPlatformType(1); // 门户
+            }
+        } else {
+            operationLog.setPlatformType(1); // 默认为门户
+        }
+
         // 记录请求参数
         if (annotation.recordParams()) {
             String params = getRequestParams(joinPoint);

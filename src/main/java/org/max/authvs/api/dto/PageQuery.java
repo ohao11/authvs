@@ -1,6 +1,8 @@
 package org.max.authvs.api.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,9 +14,12 @@ import lombok.NoArgsConstructor;
 @Schema(description = "分页查询入参")
 public class PageQuery {
 
+    @Min(value = 1, message = "页码不能小于1")
     @Schema(description = "页码，从1开始", example = "1")
     private Long pageNum = 1L;
 
+    @Min(value = 1, message = "每页条数不能小于1")
+    @Max(value = 1000, message = "每页条数不能大于1000")
     @Schema(description = "每页条数，默认10，最大1000", example = "10")
     private Long pageSize = 10L;
 

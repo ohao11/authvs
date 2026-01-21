@@ -1,24 +1,20 @@
 package org.max.authvs.api;
 
-import cn.hutool.core.util.DesensitizedUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.max.authvs.annotation.OperationLog;
+import org.max.authvs.api.dto.PageVo;
 import org.max.authvs.api.dto.ResultDTO;
 import org.max.authvs.api.dto.user.in.UserQueryParam;
-import org.max.authvs.api.dto.user.out.PageVO;
 import org.max.authvs.api.dto.user.out.UserDetailVo;
-import org.max.authvs.api.dto.user.out.UserListVO;
-import org.max.authvs.api.dto.user.out.UserVo;
+import org.max.authvs.api.dto.user.out.UserListVo;
 import org.max.authvs.enums.OperationType;
-import org.max.authvs.security.CustomUserDetails;
 import org.max.authvs.service.UserService;
-import org.max.authvs.utils.SecurityUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "用户", description = "用户相关接口")
+@Tag(name = "用户管理", description = "普通用户相关接口")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -29,38 +25,22 @@ public class UserController {
         this.userService = userService;
     }
 
-    @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "查询当前用户信息")
-    @Operation(summary = "获取当前用户", description = "获取当前认证用户的个人信息")
-    @GetMapping("/me")
-    public ResultDTO<UserVo> me() {
-        CustomUserDetails userDetails = SecurityUtils.getCurrentUser();
-        UserVo userVo = new UserVo(
-                userDetails.getId(),
-                userDetails.getUsername(),
-                DesensitizedUtil.email(userDetails.getEmail()),
-                DesensitizedUtil.mobilePhone(userDetails.getPhone()),
-                userDetails.getUserType(),
-                userDetails.isEnabled()
-        );
-        return ResultDTO.success(userVo);
-    }
-
-    @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "分页查询用户列表")
-    @Operation(summary = "分页查询用户列表", description = "查询后台管理员用户列表，支持按用户名、邮箱、手机号等条件查询，需要用户管理权限")
-    @PreAuthorize("@accessChecker.perm('PERM_USER_MODULE')")
+    @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "分页查询普通用户列表")
+    @Operation(summary = "分页查询普通用户列表", description = "查询门户普通用户列表，支持按用户名、邮箱、手机号等条件查询，需要用户列表权限")
+    @PreAuthorize("@accessChecker.perm('USER_LIST')")
     @PostMapping("/page")
-    public ResultDTO<PageVO<UserListVO>> getUsersByPage(
+    public ResultDTO<PageVo<UserListVo>> getUsersByPage(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "用户查询参数",
                     required = true)
             @RequestBody UserQueryParam param) {
-        PageVO<UserListVO> pageVO = userService.getUsersByPage(param);
-        return ResultDTO.success(pageVO);
+        PageVo<UserListVo> pageVo = userService.getUsersByPage(param);
+        return ResultDTO.success(pageVo);
     }
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "查询用户详情")
-    @Operation(summary = "获取用户详细信息", description = "根据用户ID查询用户详细信息（包含角色和权限），需要用户管理权限或SUPER_ADMIN角色")
-    @PreAuthorize("@accessChecker.perm('PERM_USER_MODULE')")
+    @Operation(summary = "获取用户详细信息", description = "根据用户ID查询用户详细信息（包含角色和权限），需要用户列表权限")
+    @PreAuthorize("@accessChecker.perm('USER_LIST')")
     @GetMapping("/{userId}/detail")
     public ResultDTO<UserDetailVo> getUserDetail(
             @Parameter(description = "用户ID", example = "1")

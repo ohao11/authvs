@@ -3,6 +3,8 @@ package org.max.authvs.config;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
+
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,5 +28,23 @@ public class OpenApiConfig {
                 .addServersItem(new io.swagger.v3.oas.models.servers.Server()
                         .url("http://localhost:8080")
                         .description("本地开发环境"));
+    }
+
+    @Bean
+    public GroupedOpenApi usersApi() {
+        return GroupedOpenApi.builder()
+                .group("users")
+                .pathsToMatch("/api/users/**")
+                .displayName("门户用户管理")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi adminersApi() {
+        return GroupedOpenApi.builder()
+                .group("admins")
+                .pathsToMatch("/api/admins/**")
+                .displayName("后台管理用户管理")
+                .build();
     }
 }

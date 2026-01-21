@@ -76,6 +76,11 @@ public class OperationLog {
     private String userAgent;
 
     /**
+     * 平台类型：1-门户 2-后台管理
+     */
+    private Integer platformType;
+
+    /**
      * 执行时长（毫秒）
      */
     private Long executeTime;

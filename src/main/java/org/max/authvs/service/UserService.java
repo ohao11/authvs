@@ -5,11 +5,12 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import org.max.authvs.api.dto.PageVo;
 import org.max.authvs.api.dto.user.in.UserQueryParam;
-import org.max.authvs.api.dto.user.out.PageVO;
 import org.max.authvs.api.dto.user.out.UserDetailVo;
-import org.max.authvs.api.dto.user.out.UserListVO;
+import org.max.authvs.api.dto.user.out.UserListVo;
 import org.max.authvs.entity.*;
+import org.max.authvs.enums.UserType;
 import org.max.authvs.mapper.*;
 import org.springframework.stereotype.Service;
 
@@ -46,13 +47,10 @@ public class UserService {
     /**
      * 分页查询用户列表
      */
-    /**
-     * 分页查询用户列表
-     */
-    public PageVO<UserListVO> getUsersByPage(UserQueryParam param) {
+    public PageVo<UserListVo> getUsersByPage(UserQueryParam param) {
         Page<User> page = new Page<>(param.getPageNum(), param.getPageSize());
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<User>()
-                .eq(User::getUserType, 2); // 只查询后台管理员用户
+            .eq(User::getUserType, UserType.PORTAL.getValue()); // 只查询门户用户
 
         // 添加动态查询条件
         if (StrUtil.isNotBlank(param.getUsername())) {
@@ -73,8 +71,8 @@ public class UserService {
         Page<User> userPage = userMapper.selectPage(page, queryWrapper);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        List<UserListVO> userListVOs = userPage.getRecords().stream()
-                .map(user -> new UserListVO(
+        List<UserListVo> userListVos = userPage.getRecords().stream()
+            .map(user -> new UserListVo(
                         user.getId(),
                         user.getUsername(),
                         DesensitizedUtil.email(user.getEmail()),
@@ -85,13 +83,12 @@ public class UserService {
                 ))
                 .collect(Collectors.toList());
 
-        return new PageVO<>(
-                userPage.getCurrent(),
-                userPage.getSize(),
-                userPage.getTotal(),
-                userPage.getPages(),
-                userListVOs
-        );
+        return PageVo.<UserListVo>builder()
+                .pageNum(userPage.getCurrent())
+                .pageSize(userPage.getSize())
+                .total(userPage.getTotal())
+            .records(userListVos)
+                .build();
     }
 
     /**
@@ -104,13 +101,8 @@ public class UserService {
             return null;
         }
 
-        UserDetailVo userDetailVo = new UserDetailVo();
-        userDetailVo.setId(user.getId());
-        userDetailVo.setUsername(user.getUsername());
-        userDetailVo.setEmail(user.getEmail());
-        userDetailVo.setPhone(user.getPhone());
-        userDetailVo.setUserType(user.getUserType());
-        userDetailVo.setEnabled(user.getEnabled());
+        List<UserDetailVo.RoleVo> roleVos = new ArrayList<>();
+        List<UserDetailVo.PermissionVo> permissionVos = new ArrayList<>();
 
         // 2. 查询用户的角色ID列表
         List<UserRole> userRoles = userRoleMapper.selectList(
@@ -119,65 +111,58 @@ public class UserService {
         );
 
         List<Long> roleIds = userRoles.stream()
-                .map(UserRole::getRoleId)
-                .collect(Collectors.toList());
+            .map(UserRole::getRoleId)
+            .collect(Collectors.toList());
 
-        if (roleIds.isEmpty()) {
-            userDetailVo.setRoles(new ArrayList<>());
-            userDetailVo.setPermissions(new ArrayList<>());
-            return userDetailVo;
+        if (!roleIds.isEmpty()) {
+            List<Role> roles = roleMapper.selectByIds(roleIds);
+            roleVos = roles.stream()
+                .filter(role -> Boolean.TRUE.equals(role.getEnabled()))
+                .map(role -> new UserDetailVo.RoleVo(
+                    role.getId(),
+                    role.getRoleName(),
+                    role.getRoleCode(),
+                    role.getRoleType(),
+                    role.getDescription()
+                ))
+                .collect(Collectors.toList());
         }
 
-        // 3. 查询角色详情
-        List<Role> roles = roleMapper.selectByIds(roleIds);
-        List<UserDetailVo.RoleVo> roleVos = roles.stream()
-                .filter(role -> Boolean.TRUE.equals(role.getEnabled()))
-                .map(role -> {
-                    UserDetailVo.RoleVo roleVo = new UserDetailVo.RoleVo();
-                    roleVo.setId(role.getId());
-                    roleVo.setRoleName(role.getRoleName());
-                    roleVo.setRoleCode(role.getRoleCode());
-                    roleVo.setRoleType(role.getRoleType());
-                    roleVo.setDescription(role.getDescription());
-                    return roleVo;
-                })
-                .collect(Collectors.toList());
-        userDetailVo.setRoles(roleVos);
-
-        // 4. 查询角色对应的权限ID列表
-        List<RolePermission> rolePermissions = rolePermissionMapper.selectList(
-                new LambdaQueryWrapper<RolePermission>()
-                        .in(RolePermission::getRoleId, roleIds)
+        List<RolePermission> rolePermissions = roleIds.isEmpty() ? new ArrayList<>() : rolePermissionMapper.selectList(
+            new LambdaQueryWrapper<RolePermission>()
+                .in(RolePermission::getRoleId, roleIds)
         );
 
         List<Long> permissionIds = rolePermissions.stream()
-                .map(RolePermission::getPermissionId)
-                .distinct()
-                .collect(Collectors.toList());
+            .map(RolePermission::getPermissionId)
+            .distinct()
+            .collect(Collectors.toList());
 
-        // 5. 查询权限详情
-        if (permissionIds.isEmpty()) {
-            userDetailVo.setPermissions(new ArrayList<>());
-            return userDetailVo;
+        if (!permissionIds.isEmpty()) {
+            List<Permission> permissionsEntity = permissionMapper.selectByIds(permissionIds);
+            permissionVos = permissionsEntity.stream()
+                .filter(permission -> Boolean.TRUE.equals(permission.getEnabled()))
+                .map(permission -> new UserDetailVo.PermissionVo(
+                    permission.getId(),
+                    permission.getPermissionName(),
+                    permission.getPermissionCode(),
+                    permission.getPermissionType(),
+                    permission.getModulePath(),
+                    permission.getDescription()
+                ))
+                .collect(Collectors.toList());
         }
 
-        List<Permission> permissions = permissionMapper.selectByIds(permissionIds);
-        List<UserDetailVo.PermissionVo> permissionVos = permissions.stream()
-                .filter(permission -> Boolean.TRUE.equals(permission.getEnabled()))
-                .map(permission -> {
-                    UserDetailVo.PermissionVo permissionVo = new UserDetailVo.PermissionVo();
-                    permissionVo.setId(permission.getId());
-                    permissionVo.setPermissionName(permission.getPermissionName());
-                    permissionVo.setPermissionCode(permission.getPermissionCode());
-                    permissionVo.setPermissionType(permission.getPermissionType());
-                    permissionVo.setModulePath(permission.getModulePath());
-                    permissionVo.setDescription(permission.getDescription());
-                    return permissionVo;
-                })
-                .collect(Collectors.toList());
-        userDetailVo.setPermissions(permissionVos);
-
-        return userDetailVo;
+        return new UserDetailVo(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getPhone(),
+            user.getUserType(),
+            user.getEnabled(),
+            roleVos,
+            permissionVos
+        );
     }
 }
 

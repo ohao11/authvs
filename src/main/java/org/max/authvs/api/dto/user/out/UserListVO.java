@@ -2,11 +2,8 @@ package org.max.authvs.api.dto.user.out;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * 用户列表项VO
- */
 @Schema(description = "用户列表项")
-public record UserListVO(
+public record UserListVo(
         @Schema(description = "用户ID", example = "1")
         Long id,
         @Schema(description = "用户名", example = "admin")

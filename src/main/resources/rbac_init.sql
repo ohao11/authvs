@@ -21,7 +21,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL COMMENT '密码（BCrypt加密）',
     email VARCHAR(100) COMMENT '邮箱',
     phone VARCHAR(20) COMMENT '手机号',
-    user_type TINYINT(1) NOT NULL DEFAULT 1 COMMENT '用户类型：1-门户用户 2-后台管理员',
+    user_type TINYINT(1) NOT NULL DEFAULT 1 COMMENT '用户类型：1-门户用户(PORTAL) 2-后台管理员(ADMIN)',
     enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
     created_at TIMESTAMP NULL COMMENT '创建时间',
     updated_at TIMESTAMP NULL COMMENT '更新时间',
@@ -70,8 +70,6 @@ CREATE TABLE user_roles (
     role_id BIGINT NOT NULL COMMENT '角色ID',
     created_at TIMESTAMP NULL COMMENT '创建时间',
     UNIQUE KEY uk_user_role (user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
     KEY idx_user_id (user_id),
     KEY idx_role_id (role_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色关联表';
@@ -83,8 +81,6 @@ CREATE TABLE role_permissions (
     permission_id BIGINT NOT NULL COMMENT '权限ID',
     created_at TIMESTAMP NULL COMMENT '创建时间',
     UNIQUE KEY uk_role_permission (role_id, permission_id),
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
-    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
     KEY idx_role_id (role_id),
     KEY idx_permission_id (permission_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色权限关联表';
@@ -94,31 +90,42 @@ CREATE TABLE role_permissions (
 -- =============================================
 
 -- 后台管理角色
-INSERT INTO roles (role_name, role_code, role_type, description) VALUES
-('超级管理员', 'SUPER_ADMIN', 2, '后台超级管理员，拥有所有权限'),
-('系统管理员', 'SYSTEM_ADMIN', 2, '后台系统管理员，负责系统配置和维护'),
-('安全管理员', 'SECURITY_ADMIN', 2, '后台安全管理员，负责安全策略和权限管理'),
-('审计管理员', 'AUDIT_ADMIN', 2, '后台审计管理员，负责系统审计和日志管理');
+INSERT INTO roles (id, role_name, role_code, role_type, description) VALUES
+(1, '超级管理员', 'SUPER_ADMIN', 2, '后台超级管理员，拥有所有权限'),
+(2, '系统管理员', 'SYSTEM_ADMIN', 2, '后台系统管理员，负责系统配置和维护'),
+(3, '安全管理员', 'SECURITY_ADMIN', 2, '后台安全管理员，负责安全策略和权限管理'),
+(4, '审计管理员', 'AUDIT_ADMIN', 2, '后台审计管理员，负责系统审计和日志管理');
 
 -- 门户用户角色
-INSERT INTO roles (role_name, role_code, role_type, description) VALUES
-('普通用户', 'NORMAL_USER', 1, '门户普通用户');
+INSERT INTO roles (id, role_name, role_code, role_type, description) VALUES
+(5, '普通用户', 'NORMAL_USER', 1, '门户普通用户');
+
+
 
 -- 后台管理权限（模块级）
-INSERT INTO permissions (permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
-('用户管理', 'USER_MODULE', 2, '/admin/users', 0, 1, '后台用户管理模块'),
-('角色管理', 'ROLE_MODULE', 2, '/admin/roles', 0, 2, '后台角色管理模块'),
-('权限管理', 'PERMISSION_MODULE', 2, '/admin/permissions', 0, 3, '后台权限管理模块'),
-('内容管理', 'CONTENT_MODULE', 2, '/admin/contents', 0, 4, '后台内容管理模块'),
-('系统设置', 'SYSTEM_MODULE', 2, '/admin/settings', 0, 5, '后台系统设置模块'),
-('审计管理', 'AUDIT_MODULE', 2, '/admin/audit', 0, 6, '后台审计管理模块');
+-- 一级权限
+INSERT INTO permissions (id, permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
+(1, '用户管理', 'USER_MODULE', 2, '/admin/users', 0, 1, '后台用户管理模块'),
+(2, '审计管理', 'AUDIT_MODULE', 2, '/admin/audit', 0, 2, '后台审计管理模块'),
+(3, '认证管理', 'AUTH_MODULE', 2, '/admin/auth', 0, 3, '后台认证管理模块'),
+(4, '系统设置', 'SYSTEM_MODULE', 2, '/admin/settings', 0, 4, '后台系统设置模块');
 
--- 门户用户权限（模块级）
-INSERT INTO permissions (permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
-('个人中心', 'PROFILE_MODULE', 1, '/portal/profile', 0, 1, '门户个人中心模块'),
-('我的订单', 'ORDER_MODULE', 1, '/portal/orders', 0, 2, '门户订单管理模块'),
-('会员服务', 'VIP_MODULE', 1, '/portal/vip', 0, 3, '门户会员服务模块'),
-('消息通知', 'MESSAGE_MODULE', 1, '/portal/messages', 0, 4, '门户消息通知模块');
+-- 二级权限 - 用户管理
+INSERT INTO permissions (id, permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
+(5, '用户列表', 'USER_LIST', 2, '/admin/users/list', 1, 1, '用户列表管理'),
+(6, '管理员列表', 'ADMIN_LIST', 2, '/admin/users/admin', 1, 2, '管理员列表管理');
+
+-- 二级权限 - 审计管理
+INSERT INTO permissions (id, permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
+(7, '审计列表', 'AUDIT_LIST', 2, '/admin/audit/list', 2, 1, '审计列表查询（支持后台和门户日志）');
+
+-- 二级权限 - 认证管理
+INSERT INTO permissions (id, permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
+(8, '客户端列表', 'CLIENT_LIST', 2, '/admin/auth/clients', 3, 1, '认证客户端列表管理');
+
+-- 二级权限 - 系统设置
+INSERT INTO permissions (id, permission_name, permission_code, permission_type, module_path, parent_id, sort_order, description) VALUES
+(9, '基础配置', 'BASIC_CONFIG', 2, '/admin/settings/config', 4, 1, '系统基础配置管理');
 
 -- 后台管理员用户（密码：admin123, sysadmin123, secadmin123, auditadmin123）
 INSERT INTO users (username, password, email, phone, user_type, enabled) VALUES
@@ -132,6 +139,8 @@ INSERT INTO users (username, password, email, phone, user_type, enabled) VALUES
 ('user001', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'user001@example.com', '13900139001', 1, 1),
 ('user002', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'user002@example.com', '13900139002', 1, 1);
 
+
+
 -- 用户角色关联
 INSERT INTO user_roles (user_id, role_id) VALUES
 (1, 1), -- admin 拥有 超级管理员 角色
@@ -142,21 +151,17 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 (6, 5); -- user002 拥有 普通用户 角色
 
 -- 角色权限关联
--- 系统管理员拥有用户管理和系统设置权限
+-- 系统管理员拥有用户管理（用户列表、管理员列表）和系统设置（基础配置）权限
 INSERT INTO role_permissions (role_id, permission_id) VALUES
-(2, 1), (2, 5);
+(2, 5), (2, 6), (2, 9);
 
--- 安全管理员拥有角色管理和权限管理权限
+-- 安全管理员拥有认证管理（客户端列表）权限
 INSERT INTO role_permissions (role_id, permission_id) VALUES
-(3, 2), (3, 3);
+(3, 8);
 
--- 审计管理员拥有内容管理和审计管理权限
+-- 审计管理员拥有审计管理（审计列表）权限
 INSERT INTO role_permissions (role_id, permission_id) VALUES
-(4, 4), (4, 6);
-
--- 普通用户拥有所有门户权限
-INSERT INTO role_permissions (role_id, permission_id) VALUES
-(5, 6), (5, 7), (5, 8), (5, 9);
+(4, 7);
 -- =============================================
 -- 操作日志表
 -- =============================================
@@ -180,6 +185,8 @@ CREATE TABLE operation_log (
     device_type VARCHAR(20) COMMENT '设备类型：WEB IOS ANDROID PC',
     user_agent VARCHAR(500) COMMENT '用户代理',
     
+    platform_type TINYINT(1) DEFAULT 1 COMMENT '平台类型：1-门户 2-后台管理',
+    
     execute_time BIGINT COMMENT '执行时长（毫秒）',
     status VARCHAR(20) COMMENT '执行状态：SUCCESS FAIL',
     error_message TEXT COMMENT '错误信息',
@@ -190,6 +197,7 @@ CREATE TABLE operation_log (
     KEY idx_username (username),
     KEY idx_operation_type (operation_type),
     KEY idx_operation_module (operation_module),
+    KEY idx_platform_type (platform_type),
     KEY idx_status (status),
     KEY idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';

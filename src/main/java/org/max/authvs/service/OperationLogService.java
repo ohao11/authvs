@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.max.authvs.api.dto.log.OperationLogQueryParam;
-import org.max.authvs.api.dto.log.OperationLogVo;
+import org.max.authvs.api.dto.log.out.OperationLogVo;
 import org.max.authvs.entity.OperationLog;
 import org.max.authvs.mapper.OperationLogMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -98,8 +97,25 @@ public class OperationLogService {
      * 转换为VO对象
      */
     private OperationLogVo convertToVo(OperationLog operationLog) {
-        OperationLogVo vo = new OperationLogVo();
-        BeanUtils.copyProperties(operationLog, vo);
-        return vo;
+        return new OperationLogVo(
+            operationLog.getId(),
+            operationLog.getUserId(),
+            operationLog.getUsername(),
+            operationLog.getOperationType(),
+            operationLog.getOperationModule(),
+            operationLog.getOperationDesc(),
+            operationLog.getRequestMethod(),
+            operationLog.getRequestUrl(),
+            operationLog.getRequestParams(),
+            operationLog.getResponseResult(),
+            operationLog.getIpAddress(),
+            operationLog.getDeviceType(),
+            operationLog.getUserAgent(),
+            operationLog.getPlatformType(),
+            operationLog.getExecuteTime(),
+            operationLog.getStatus(),
+            operationLog.getErrorMessage(),
+            operationLog.getCreatedAt()
+        );
     }
 }

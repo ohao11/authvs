@@ -37,4 +37,7 @@ public class OperationLogQueryParam extends PageQuery {
     @Schema(description = "结束时间", example = "2025-12-31 23:59:59")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
+
+    @Schema(description = "平台类型：1-门户 2-后台管理", example = "2")
+    private Integer platformType;
 }
