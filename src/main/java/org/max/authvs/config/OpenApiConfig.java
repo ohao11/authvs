@@ -31,6 +31,15 @@ public class OpenApiConfig {
     }
 
     @Bean
+    public GroupedOpenApi authApi() {
+        return GroupedOpenApi.builder()
+                .group("auth")
+                .pathsToMatch("/api/auth/**", "/api/me")
+                .displayName("门户用户管理")
+                .build();
+    }
+
+    @Bean
     public GroupedOpenApi usersApi() {
         return GroupedOpenApi.builder()
                 .group("users")

@@ -29,7 +29,7 @@ public class OperationLogController {
 
     @OperationLog(type = OperationType.QUERY, module = "审计管理", description = "分页查询审计日志")
     @Operation(summary = "分页查询审计日志", description = "支持多条件查询（用户名、操作类型、模块、状态、平台类型等），可通过platformType参数区分后台管理和门户日志，需要审计列表权限")
-    @PreAuthorize("@accessChecker.perm('AUDIT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_AUDIT_LIST')")
     @PostMapping("/page")
     public ResultDTO<PageVo<OperationLogVo>> getOperationLogs(@RequestBody OperationLogQueryParam param) {
         Page<OperationLogVo> page = operationLogService.getOperationLogs(param);
@@ -44,7 +44,7 @@ public class OperationLogController {
 
     @OperationLog(type = OperationType.QUERY, module = "审计管理", description = "查询审计日志详情")
     @Operation(summary = "查询审计日志详情", description = "根据ID查询日志详情，需要审计列表权限")
-    @PreAuthorize("@accessChecker.perm('AUDIT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_AUDIT_LIST')")
     @GetMapping("/{id}")
     public ResultDTO<OperationLogVo> getOperationLogById(@PathVariable Long id) {
         OperationLogVo vo = operationLogService.getOperationLogById(id);
@@ -53,7 +53,7 @@ public class OperationLogController {
 
     @OperationLog(type = OperationType.DELETE, module = "审计管理", description = "归档旧日志")
     @Operation(summary = "归档旧日志", description = "归档并删除超过6个月的日志，需要审计列表权限")
-    @PreAuthorize("@accessChecker.perm('AUDIT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_AUDIT_LIST')")
     @PostMapping("/archive")
     public ResultDTO<Integer> archiveOldLogs() {
         int count = operationLogService.archiveOldLogs();

@@ -27,7 +27,6 @@ public class PublicController {
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "查询当前用户信息")
     @Operation(summary = "获取当前用户", description = "获取当前认证用户的个人信息")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResultDTO<UserVo> me() {
         CustomUserDetails userDetails = SecurityUtils.getCurrentUser();

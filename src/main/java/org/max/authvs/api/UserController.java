@@ -27,7 +27,7 @@ public class UserController {
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "分页查询普通用户列表")
     @Operation(summary = "分页查询普通用户列表", description = "查询门户普通用户列表，支持按用户名、邮箱、手机号等条件查询，需要用户列表权限")
-    @PreAuthorize("@accessChecker.perm('USER_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_USER_LIST')")
     @PostMapping("/page")
     public ResultDTO<PageVo<UserListVo>> getUsersByPage(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -40,7 +40,7 @@ public class UserController {
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "查询用户详情")
     @Operation(summary = "获取用户详细信息", description = "根据用户ID查询用户详细信息（包含角色和权限），需要用户列表权限")
-    @PreAuthorize("@accessChecker.perm('USER_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_USER_LIST')")
     @GetMapping("/{userId}/detail")
     public ResultDTO<UserDetailVo> getUserDetail(
             @Parameter(description = "用户ID", example = "1")

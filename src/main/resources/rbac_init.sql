@@ -129,7 +129,7 @@ INSERT INTO permissions (id, permission_name, permission_code, permission_type, 
 
 -- 后台管理员用户（密码：admin123, sysadmin123, secadmin123, auditadmin123）
 INSERT INTO users (username, password, email, phone, user_type, enabled) VALUES
-('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/shaO', 'admin@example.com', '13800138000', 2, 1),
+('admin', '$2a$10$1jd0t.AWFGX3IJZdgjUfl.cH1Kvl02DW.S4YgbJbESnsyW3gC2abK', 'admin@example.com', '13800138000', 2, 1),
 ('sysadmin', '$2a$10$V9.2Q0EX3hXKK3cAJ1eJb.FFCfVqoGdL77fBBhBVqXG5EeX/2hVhS', 'sysadmin@example.com', '13800138001', 2, 1),
 ('secadmin', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'secadmin@example.com', '13800138002', 2, 1),
 ('auditadmin', '$2a$10$xQsUvGHPcFpkkPd2xFEYo.R92eGQRBKp8TTEMzQRxKfvKVfMaK1Jm', 'auditadmin@example.com', '13800138003', 2, 1);
@@ -150,18 +150,14 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 (5, 5), -- user001 拥有 普通用户 角色
 (6, 5); -- user002 拥有 普通用户 角色
 
--- 角色权限关联
--- 系统管理员拥有用户管理（用户列表、管理员列表）和系统设置（基础配置）权限
+-- 角色权限关联（若有子菜单则自动包含父菜单）
 INSERT INTO role_permissions (role_id, permission_id) VALUES
-(2, 5), (2, 6), (2, 9);
-
--- 安全管理员拥有认证管理（客户端列表）权限
-INSERT INTO role_permissions (role_id, permission_id) VALUES
-(3, 8);
-
--- 审计管理员拥有审计管理（审计列表）权限
-INSERT INTO role_permissions (role_id, permission_id) VALUES
-(4, 7);
+-- 系统管理员：用户管理父级 + 子级，系统设置父级 + 子级
+(2, 1), (2, 5), (2, 6), (2, 4), (2, 9),
+-- 安全管理员：认证管理父级 + 子级
+(3, 3), (3, 8),
+-- 审计管理员：审计管理父级 + 子级
+(4, 2), (4, 7);
 -- =============================================
 -- 操作日志表
 -- =============================================

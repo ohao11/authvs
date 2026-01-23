@@ -33,7 +33,7 @@ public class AdminController {
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "分页查询管理员列表")
     @Operation(summary = "分页查询管理员列表", description = "查询后台管理员列表，支持按用户名、邮箱、手机号等条件查询，需要管理员列表权限")
-    @PreAuthorize("@accessChecker.perm('ADMIN_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_ADMIN_LIST')")
     @PostMapping("/page")
     public ResultDTO<PageVo<AdminListVo>> getAdminsByPage(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -46,7 +46,7 @@ public class AdminController {
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "查询管理员详情")
     @Operation(summary = "获取管理员详细信息", description = "根据管理员ID查询管理员详细信息（包含角色和权限），需要管理员列表权限")
-    @PreAuthorize("@accessChecker.perm('ADMIN_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_ADMIN_LIST')")
     @GetMapping("/{adminId}/detail")
     public ResultDTO<AdminDetailVo> getAdminDetail(
             @Parameter(description = "管理员ID", example = "1")
@@ -63,7 +63,7 @@ public class AdminController {
 
     @OperationLog(type = OperationType.CREATE, module = "用户管理", description = "创建管理员")
     @Operation(summary = "创建管理员", description = "创建后台管理员账号并分配角色，需要管理员列表权限")
-    @PreAuthorize("@accessChecker.perm('ADMIN_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_ADMIN_LIST')")
     @PostMapping
     public ResultDTO<Long> createAdmin(@Valid @RequestBody AdminCreateParam param) {
         Long adminId = adminService.createAdmin(param);
@@ -72,7 +72,7 @@ public class AdminController {
 
     @OperationLog(type = OperationType.UPDATE, module = "用户管理", description = "更新管理员信息")
     @Operation(summary = "更新管理员信息", description = "更新后台管理员账号信息和角色，需要管理员列表权限")
-    @PreAuthorize("@accessChecker.perm('ADMIN_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_ADMIN_LIST')")
     @PutMapping("/{adminId}")
     public ResultDTO<Boolean> updateAdmin(
             @Parameter(description = "管理员ID", example = "1")
@@ -88,7 +88,7 @@ public class AdminController {
 
     @OperationLog(type = OperationType.QUERY, module = "用户管理", description = "获取管理员角色列表")
     @Operation(summary = "获取管理员角色列表", description = "获取所有启用的角色列表，用于创建或编辑管理员时选择角色，需要管理员列表权限")
-    @PreAuthorize("@accessChecker.perm('ADMIN_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_ADMIN_LIST')")
     @GetMapping("/roles")
     public ResultDTO<List<RoleListVo>> getRolesList() {
         List<RoleListVo> roles = adminService.getRolesList();
