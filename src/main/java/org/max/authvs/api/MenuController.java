@@ -7,7 +7,6 @@ import org.max.authvs.api.dto.menu.out.MenuVo;
 import org.max.authvs.security.CustomUserDetails;
 import org.max.authvs.service.MenuService;
 import org.max.authvs.utils.SecurityUtils;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +29,7 @@ public class MenuController {
 
     /**
      * 获取当前用户的菜单
-     * 
+     *
      * @return 菜单树列表
      */
     @Operation(summary = "获取用户菜单", description = "获取当前登录用户有权限访问的菜单")

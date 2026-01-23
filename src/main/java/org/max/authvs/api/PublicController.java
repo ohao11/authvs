@@ -9,7 +9,6 @@ import org.max.authvs.api.dto.user.out.UserVo;
 import org.max.authvs.enums.OperationType;
 import org.max.authvs.security.CustomUserDetails;
 import org.max.authvs.utils.SecurityUtils;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
