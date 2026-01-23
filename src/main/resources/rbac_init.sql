@@ -168,28 +168,18 @@ CREATE TABLE oauth_clients (
     client_id VARCHAR(100) NOT NULL COMMENT '客户端标识',
     client_secret VARCHAR(255) NOT NULL COMMENT '客户端密钥（加密存储）',
     client_name VARCHAR(100) NOT NULL COMMENT '客户端名称',
-    
-    -- 授权相关
     grant_types VARCHAR(500) NOT NULL COMMENT '授权类型（多个用逗号分隔）：authorization_code,refresh_token,client_credentials,password',
     redirect_uris TEXT COMMENT '重定向URI（多个用逗号分隔）',
     post_logout_redirect_uris TEXT COMMENT '登出后重定向URI（多个用逗号分隔）',
-    
-    -- Token配置
     access_token_validity INT DEFAULT 3600 COMMENT 'Access Token有效期（秒），默认1小时',
     refresh_token_validity INT DEFAULT 2592000 COMMENT 'Refresh Token有效期（秒），默认30天',
     id_token_validity INT DEFAULT 3600 COMMENT 'ID Token有效期（秒），默认1小时',
-    
-    -- 作用域和权限
     scopes VARCHAR(500) COMMENT '允许的作用域（多个用逗号分隔）：openid,profile,email等',
     auto_approve TINYINT(1) DEFAULT 0 COMMENT '是否自动授权：0-需要用户确认 1-自动授权',
-    
-    -- 客户端信息
     client_type TINYINT(1) DEFAULT 1 COMMENT '客户端类型：1-Web应用 2-移动应用 3-单页应用 4-服务端应用',
     description VARCHAR(500) COMMENT '客户端描述',
     logo_url VARCHAR(255) COMMENT '客户端Logo URL',
     home_url VARCHAR(255) COMMENT '客户端主页URL',
-    
-    -- 状态管理
     enabled TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用：0-禁用 1-启用',
     created_by BIGINT COMMENT '创建人ID',
     created_at TIMESTAMP NULL COMMENT '创建时间',

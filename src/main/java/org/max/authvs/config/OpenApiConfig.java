@@ -56,4 +56,13 @@ public class OpenApiConfig {
                 .displayName("后台管理用户管理")
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi oidcApi() {
+        return GroupedOpenApi.builder()
+                .group("oidc")
+                .pathsToMatch("/api/clients/**")
+                .displayName("OIDC客户端管理相关接口")
+                .build();
+    }
 }

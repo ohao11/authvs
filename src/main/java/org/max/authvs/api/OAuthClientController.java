@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "客户端管理", description = "OIDC客户端管理相关接口")
 @RestController
-@RequestMapping("/api/admin/clients")
+@RequestMapping("/api/clients")
 public class OAuthClientController {
 
     private final OAuthClientService clientService;
@@ -32,7 +32,7 @@ public class OAuthClientController {
 
     @OperationLog(type = OperationType.QUERY, module = "认证管理", description = "分页查询客户端列表")
     @Operation(summary = "分页查询客户端列表", description = "查询OIDC客户端列表，支持按客户端名称、客户端ID、类型、状态等条件查询")
-    @PreAuthorize("@accessChecker.perm('CLIENT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_CLIENT_LIST')")
     @PostMapping("/page")
     public ResultDTO<PageVo<ClientVo>> getClientsByPage(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -45,7 +45,7 @@ public class OAuthClientController {
 
     @OperationLog(type = OperationType.QUERY, module = "认证管理", description = "查询客户端详情")
     @Operation(summary = "获取客户端详细信息", description = "根据客户端ID查询客户端详细信息（密钥脱敏显示）")
-    @PreAuthorize("@accessChecker.perm('CLIENT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_CLIENT_LIST')")
     @GetMapping("/{id}")
     public ResultDTO<ClientVo> getClientById(
             @Parameter(description = "客户端ID", example = "1")
@@ -59,7 +59,7 @@ public class OAuthClientController {
 
     @OperationLog(type = OperationType.CREATE, module = "认证管理", description = "创建客户端")
     @Operation(summary = "创建客户端", description = "创建新的OIDC客户端，自动生成client_id和client_secret（明文密钥仅返回一次）")
-    @PreAuthorize("@accessChecker.perm('CLIENT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_CLIENT_LIST')")
     @PostMapping
     public ResultDTO<ClientVo> createClient(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -72,7 +72,7 @@ public class OAuthClientController {
 
     @OperationLog(type = OperationType.UPDATE, module = "认证管理", description = "更新客户端信息")
     @Operation(summary = "更新客户端信息", description = "更新客户端配置信息（不包括密钥，密钥需单独重置）")
-    @PreAuthorize("@accessChecker.perm('CLIENT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_CLIENT_LIST')")
     @PutMapping("/{id}")
     public ResultDTO<ClientVo> updateClient(
             @Parameter(description = "客户端ID", example = "1")
@@ -90,7 +90,7 @@ public class OAuthClientController {
 
     @OperationLog(type = OperationType.UPDATE, module = "认证管理", description = "切换客户端状态")
     @Operation(summary = "启用/禁用客户端", description = "切换客户端的启用状态")
-    @PreAuthorize("@accessChecker.perm('CLIENT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_CLIENT_LIST')")
     @PatchMapping("/{id}/status")
     public ResultDTO<Void> toggleClientStatus(
             @Parameter(description = "客户端ID", example = "1")
@@ -109,7 +109,7 @@ public class OAuthClientController {
 
     @OperationLog(type = OperationType.UPDATE, module = "认证管理", description = "重置客户端密钥")
     @Operation(summary = "重置客户端密钥", description = "重新生成客户端密钥（明文密钥仅返回一次，请妥善保存）")
-    @PreAuthorize("@accessChecker.perm('CLIENT_LIST')")
+    @PreAuthorize("@accessChecker.perm('PERM_CLIENT_LIST')")
     @PostMapping("/{id}/reset-secret")
     public ResultDTO<ClientSecretResetVo> resetClientSecret(
             @Parameter(description = "客户端ID", example = "1")
